@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
+[RequireComponent(typeof(NavMeshAgent))]
 public class PetFollow : MonoBehaviour
 {
     [Header("Tracking Settings")]
@@ -15,14 +16,17 @@ public class PetFollow : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         
-        // Stop a comfortable distance away from the player
-        agent.stoppingDistance = stopDistance; 
+        if (agent != null)
+        {
+            // Stop a comfortable distance away from the player
+            agent.stoppingDistance = stopDistance; 
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (playerTransform != null)
+        if (agent != null && playerTransform != null)
         {
             // Tell the NavMesh Agent to target the player
             agent.SetDestination(playerTransform.position);
@@ -33,7 +37,7 @@ public class PetFollow : MonoBehaviour
     }
     void UpdateAnimations()
     {
-        if (animator != null)
+        if (animator != null && agent != null)
         {
             // Check if the agent is actively moving faster than a threshold
             bool isMoving = agent.velocity.magnitude > 0.1f;
