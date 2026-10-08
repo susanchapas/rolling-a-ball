@@ -10,12 +10,20 @@ public class EnemyMovement : MonoBehaviour
        navMeshAgent = GetComponent<NavMeshAgent>(); 
     }
 
+    private float timer = 0f;
+    private float updateInterval = 0.1f;
+
     // Update is called once per frame
     void Update()
     {
-       if (player != null && !navMeshAgent.pathPending)
-       {    
-           navMeshAgent.SetDestination(player.position);
+       if (player != null)
+       {
+           timer += Time.deltaTime;
+           if (timer >= updateInterval)
+           {
+               navMeshAgent.SetDestination(player.position);
+               timer = 0f;
+           }
        } 
     }
 }

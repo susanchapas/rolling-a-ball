@@ -54,7 +54,7 @@ public class playerController : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
-    if (collision.gameObject.CompareTag("Enemy"))
+    if (collision.collider.CompareTag("Enemy"))
         {
             // Destroy the current object
             Destroy(gameObject); 

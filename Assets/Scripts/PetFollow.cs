@@ -29,7 +29,10 @@ public class PetFollow : MonoBehaviour
         if (agent != null && playerTransform != null)
         {
             // Tell the NavMesh Agent to target the player
-            agent.SetDestination(playerTransform.position);
+            if (!agent.pathPending)
+            {
+                agent.SetDestination(playerTransform.position);
+            }
 
             // Update animations based on movement speed
             UpdateAnimations();
@@ -37,7 +40,7 @@ public class PetFollow : MonoBehaviour
     }
     void UpdateAnimations()
     {
-        if (animator != null && agent != null)
+        if (animator != null && animator.runtimeAnimatorController != null && agent != null)
         {
             // Check if the agent is actively moving faster than a threshold
             bool isMoving = agent.velocity.magnitude > 0.1f;
