@@ -3,6 +3,7 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
+[DefaultExecutionOrder(-200)]
 [RequireComponent(typeof(NavMeshAgent))]
 public class PetFollow : MonoBehaviour
 {
@@ -18,9 +19,9 @@ public class PetFollow : MonoBehaviour
     void Awake()
     {
         navMeshData = new NavMeshData();
-        navMeshInstance = NavMesh.AddNavMeshData(navMeshData);
         BakeNavMesh();
-        foreach (NavMeshSurface surface in NavMeshSurface.activeSurfaces.ToArray())
+        navMeshInstance = NavMesh.AddNavMeshData(navMeshData);
+        foreach (NavMeshSurface surface in FindObjectsByType<NavMeshSurface>())
         {
             surface.enabled = false;
         }

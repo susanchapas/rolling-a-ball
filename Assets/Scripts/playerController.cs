@@ -10,7 +10,10 @@ public class playerController : MonoBehaviour
     private float movementX;
     private float movementY;
     private GameObject northDoor;
-    public float speed = 0;
+    public float speed = 5;
+    public float jumpForce = 5;
+    public float turnSpeed = 720;
+    public float groundCheckDistance = 0.6f;
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
     void Start()
@@ -34,7 +37,18 @@ public class playerController : MonoBehaviour
     {
         Vector3 movement = new Vector3(movementX, 0.0f, movementY);
 
-        rb.AddForce(movement * speed);
+        rb.linearVelocity = movement * speed + Vector3.up * rb.linearVelocity.y;
+        if (movement != Vector3.zero)
+        {
+            rb.MoveRotation(Quaternion.RotateTowards(rb.rotation, Quaternion.LookRotation(movement), turnSpeed * Time.fixedDeltaTime));
+        }
+    }
+    void OnJump()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, groundCheckDistance, ~0, QueryTriggerInteraction.Ignore))
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        }
     }
     private void OnTriggerEnter(Collider other)
     {
@@ -43,6 +57,10 @@ public class playerController : MonoBehaviour
             other.gameObject.SetActive(false);
             count++;
             SetCountText();
+        }
+        else if(other.gameObject.CompareTag("KillFloor"))
+        {
+            Lose();
         }
     }
     void SetCountText()
@@ -69,13 +87,15 @@ public class playerController : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
-    if (collision.collider.CompareTag("Enemy"))
+        if (collision.collider.CompareTag("Enemy"))
         {
-            // Destroy the current object
-            Destroy(gameObject); 
-            // Update the winText to display "You Lose!"
-            winTextObject.gameObject.SetActive(true);
-            winTextObject.GetComponent<TextMeshProUGUI>().text = "You Lose!";
+            Lose();
         }
+    }
+    void Lose()
+    {
+        Destroy(gameObject);
+        winTextObject.SetActive(true);
+        winTextObject.GetComponent<TextMeshProUGUI>().text = "You Lose!";
     }
 }

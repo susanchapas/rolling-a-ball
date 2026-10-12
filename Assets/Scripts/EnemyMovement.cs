@@ -10,10 +10,10 @@ public class EnemyMovement : MonoBehaviour
     void Start()
     {
        navMeshAgent = GetComponent<NavMeshAgent>();
-       if (!navMeshAgent.isOnNavMesh)
+       if (!navMeshAgent.isOnNavMesh
+           && NavMesh.SamplePosition(transform.position, out NavMeshHit hit, navMeshAgent.height * 2.0f, NavMesh.AllAreas))
        {
-           navMeshAgent.enabled = false;
-           navMeshAgent.enabled = true;
+           navMeshAgent.Warp(hit.position);
        }
     }
 
@@ -22,7 +22,7 @@ public class EnemyMovement : MonoBehaviour
 
     void Update()
     {
-       if (player != null && IsPlayerOnPlatform())
+       if (player != null && navMeshAgent.isOnNavMesh && IsPlayerOnPlatform())
        {
            timer += Time.deltaTime;
            if (timer >= updateInterval)
