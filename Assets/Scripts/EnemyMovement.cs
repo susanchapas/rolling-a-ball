@@ -4,11 +4,12 @@ using UnityEngine.AI;
 public class EnemyMovement : MonoBehaviour
 {
     public Transform player;
-    public Transform activationGround;
-    private NavMeshAgent navMeshAgent;    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    public Transform platform;
+    private NavMeshAgent navMeshAgent;
+
     void Start()
     {
-       navMeshAgent = GetComponent<NavMeshAgent>(); 
+       navMeshAgent = GetComponent<NavMeshAgent>();
        if (!navMeshAgent.isOnNavMesh)
        {
            navMeshAgent.enabled = false;
@@ -19,10 +20,9 @@ public class EnemyMovement : MonoBehaviour
     private float timer = 0f;
     private float updateInterval = 0.1f;
 
-    // Update is called once per frame
     void Update()
     {
-       if (player != null && IsActivated())
+       if (player != null && IsPlayerOnPlatform())
        {
            timer += Time.deltaTime;
            if (timer >= updateInterval)
@@ -30,15 +30,11 @@ public class EnemyMovement : MonoBehaviour
                navMeshAgent.SetDestination(player.position);
                timer = 0f;
            }
-       } 
+       }
     }
 
-    private bool IsActivated()
+    private bool IsPlayerOnPlatform()
     {
-        if (activationGround != null && Physics.Raycast(player.position, Vector3.down, out RaycastHit hit) && hit.transform == activationGround)
-        {
-            activationGround = null;
-        }
-        return activationGround == null;
+        return Physics.Raycast(player.position, Vector3.down, out RaycastHit hit) && hit.transform.IsChildOf(platform);
     }
 }

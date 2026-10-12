@@ -11,7 +11,7 @@ public class PetFollow : MonoBehaviour
     public float stopDistance = 2.0f; // Distance to keep from the player
 
     private NavMeshAgent agent;
-    private Animator animator;
+    private Animation legacyAnimation;
     private NavMeshData navMeshData;
     private NavMeshDataInstance navMeshInstance;
 
@@ -29,7 +29,7 @@ public class PetFollow : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
+        legacyAnimation = GetComponentInChildren<Animation>();
         agent.stoppingDistance = stopDistance;
     }
 
@@ -47,12 +47,17 @@ public class PetFollow : MonoBehaviour
 
         if (!agent.pathPending)
         {
+            if (agent.pathStatus == NavMeshPathStatus.PathPartial
+                && NavMesh.SamplePosition(playerTransform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
             agent.SetDestination(playerTransform.position);
         }
 
-        if (animator != null && animator.runtimeAnimatorController != null)
+        if (legacyAnimation != null)
         {
-            animator.SetBool("IsMoving", agent.velocity.magnitude > 0.1f);
+            legacyAnimation.CrossFade(agent.velocity.magnitude > 0.1f ? "walk" : "idle");
         }
     }
 
