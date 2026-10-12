@@ -10,17 +10,33 @@ public class playerController : MonoBehaviour
     private float movementX;
     private float movementY;
     private GameObject northDoor;
+    private int lives;
+    private Vector3 checkpoint;
+    private Transform currentPlatform;
+    private readonly HashSet<Transform> platforms = new HashSet<Transform>();
+    private float dashEndTime;
+    private float nextDashTime;
     public float speed = 5;
     public float jumpForce = 5;
+    public float dashMultiplier = 1.5f;
+    public float dashDuration = 0.5f;
+    public float dashCooldown = 2;
     public float turnSpeed = 720;
     public float groundCheckDistance = 0.6f;
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
+    public GameObject[] hearts;
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.sleepThreshold = 0.0f;
         count = 0;
+        lives = hearts.Length;
+        checkpoint = rb.position;
+        foreach (EnemyMovement enemy in FindObjectsByType<EnemyMovement>())
+        {
+            platforms.Add(enemy.platform);
+        }
         northDoor = GameObject.Find("Walls/North Door");
 
         SetCountText();
@@ -37,15 +53,43 @@ public class playerController : MonoBehaviour
     {
         Vector3 movement = new Vector3(movementX, 0.0f, movementY);
 
-        rb.linearVelocity = movement * speed + Vector3.up * rb.linearVelocity.y;
+        float currentSpeed = Time.time < dashEndTime ? speed * dashMultiplier : speed;
+
+        rb.linearVelocity = movement * currentSpeed + Vector3.up * rb.linearVelocity.y;
         if (movement != Vector3.zero)
         {
             rb.MoveRotation(Quaternion.RotateTowards(rb.rotation, Quaternion.LookRotation(movement), turnSpeed * Time.fixedDeltaTime));
         }
+        UpdateCheckpoint();
+    }
+    void UpdateCheckpoint()
+    {
+        if (!Physics.Raycast(rb.position, Vector3.down, out RaycastHit hit, groundCheckDistance, ~0, QueryTriggerInteraction.Ignore))
+        {
+            return;
+        }
+
+        foreach (Transform platform in platforms)
+        {
+            if (platform != currentPlatform && hit.transform.IsChildOf(platform))
+            {
+                currentPlatform = platform;
+                checkpoint = rb.position;
+                return;
+            }
+        }
+    }
+    void OnSprint()
+    {
+        if (Time.time >= nextDashTime)
+        {
+            dashEndTime = Time.time + dashDuration;
+            nextDashTime = dashEndTime + dashCooldown;
+        }
     }
     void OnJump()
     {
-        if (Physics.Raycast(transform.position, Vector3.down, groundCheckDistance, ~0, QueryTriggerInteraction.Ignore))
+        if (Time.timeScale > 0 && Physics.Raycast(transform.position, Vector3.down, groundCheckDistance, ~0, QueryTriggerInteraction.Ignore))
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
@@ -94,8 +138,30 @@ public class playerController : MonoBehaviour
     }
     void Lose()
     {
+        if (lives <= 0)
+        {
+            return;
+        }
+
+        lives--;
+        hearts[lives].SetActive(false);
+        if (lives > 0)
+        {
+            Respawn();
+            return;
+        }
+
         Destroy(gameObject);
         winTextObject.SetActive(true);
         winTextObject.GetComponent<TextMeshProUGUI>().text = "You Lose!";
+    }
+    void Respawn()
+    {
+        rb.position = checkpoint;
+        rb.linearVelocity = Vector3.zero;
+        foreach (EnemyMovement enemy in FindObjectsByType<EnemyMovement>())
+        {
+            enemy.ResetPosition();
+        }
     }
 }

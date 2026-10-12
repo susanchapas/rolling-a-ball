@@ -6,6 +6,7 @@ public class EnemyMovement : MonoBehaviour
     public Transform player;
     public Transform platform;
     private NavMeshAgent navMeshAgent;
+    private Vector3 startPosition;
 
     void Start()
     {
@@ -15,6 +16,12 @@ public class EnemyMovement : MonoBehaviour
        {
            navMeshAgent.Warp(hit.position);
        }
+       startPosition = transform.position;
+    }
+
+    public void ResetPosition()
+    {
+        navMeshAgent.Warp(startPosition);
     }
 
     private float timer = 0f;
