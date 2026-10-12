@@ -9,6 +9,7 @@ public class playerController : MonoBehaviour
     private int count;
     private float movementX;
     private float movementY;
+    private GameObject northDoor;
     public float speed = 0;
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
@@ -17,6 +18,7 @@ public class playerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.sleepThreshold = 0.0f;
         count = 0;
+        northDoor = GameObject.Find("Walls/North Door");
 
         SetCountText();
         winTextObject.SetActive(false);
@@ -46,10 +48,23 @@ public class playerController : MonoBehaviour
     void SetCountText()
     {
         countText.text = "Count: " + count.ToString();
-        if(count >= 12)
+        if (count >= 3 && northDoor != null && northDoor.activeSelf)
+        {
+            northDoor.SetActive(false);
+            PetFollow pet = FindAnyObjectByType<PetFollow>();
+            if (pet != null)
+            {
+                pet.BakeNavMesh();
+            }
+        }
+
+        if(count >= 15)
         {
             winTextObject.SetActive(true);
-            Destroy(GameObject.FindGameObjectWithTag("Enemy"));
+            foreach (GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
+            {
+                Destroy(enemy);
+            }
         }
     }
     private void OnCollisionEnter(Collision collision)
