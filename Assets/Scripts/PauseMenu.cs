@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 public class PauseMenu : MonoBehaviour
 {
     void OnEnable()
@@ -8,5 +9,9 @@ public class PauseMenu : MonoBehaviour
     void OnDisable()
     {
         Time.timeScale = 1;
+    }
+    public void Restart()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

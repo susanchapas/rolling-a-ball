@@ -10,7 +10,12 @@ AssetOrigin:
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Color
+    second: {fileID: 2100000, guid: de75bd2ec7b45c748bcd1c692422fc7b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 1

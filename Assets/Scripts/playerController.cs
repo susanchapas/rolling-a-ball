@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
+using UnityEngine.UI;
 public class playerController : MonoBehaviour
 {
     private Rigidbody rb;
@@ -26,6 +27,7 @@ public class playerController : MonoBehaviour
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
     public GameObject[] hearts;
+    public Slider dashSlider;
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -48,6 +50,10 @@ public class playerController : MonoBehaviour
 
         movementX = movementVector.x;
         movementY = movementVector.y;
+    }
+    void Update()
+    {
+        dashSlider.value = 1 - (nextDashTime - Time.time) / (dashDuration + dashCooldown);
     }
     void FixedUpdate()
     {
@@ -153,7 +159,7 @@ public class playerController : MonoBehaviour
 
         Destroy(gameObject);
         winTextObject.SetActive(true);
-        winTextObject.GetComponent<TextMeshProUGUI>().text = "You Lose!";
+        winTextObject.GetComponentInChildren<TextMeshProUGUI>().text = "You Lose!";
     }
     void Respawn()
     {

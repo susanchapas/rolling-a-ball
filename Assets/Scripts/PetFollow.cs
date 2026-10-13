@@ -4,15 +4,15 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [DefaultExecutionOrder(-200)]
-[RequireComponent(typeof(NavMeshAgent))]
 public class PetFollow : MonoBehaviour
 {
     [Header("Tracking Settings")]
     public Transform playerTransform; // Drag your Player object here
-    public float stopDistance = 2.0f; // Distance to keep from the player
+    public float headHeight = 1.1f; // Height above the player's pivot
+    public float orbitRadius = 0.8f;
+    public float orbitSpeed = 120.0f; // Degrees per second
 
-    private NavMeshAgent agent;
-    private Animation legacyAnimation;
+    private float orbitAngle;
     private NavMeshData navMeshData;
     private NavMeshDataInstance navMeshInstance;
 
@@ -27,39 +27,27 @@ public class PetFollow : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        agent = GetComponent<NavMeshAgent>();
-        legacyAnimation = GetComponentInChildren<Animation>();
-        agent.stoppingDistance = stopDistance;
-    }
-
     void OnDestroy()
     {
         navMeshInstance.Remove();
     }
 
-    void Update()
+    void LateUpdate()
     {
-        if (playerTransform == null || !agent.isOnNavMesh)
+        if (playerTransform == null)
         {
             return;
         }
 
-        if (!agent.pathPending)
+        orbitAngle += orbitSpeed * Time.deltaTime;
+        Vector3 offset = Quaternion.Euler(0.0f, orbitAngle, 0.0f) * Vector3.forward * orbitRadius;
+        Vector3 target = playerTransform.position + Vector3.up * headHeight + offset;
+        Vector3 direction = target - transform.position;
+        if (direction.sqrMagnitude > 0.0001f)
         {
-            if (agent.pathStatus == NavMeshPathStatus.PathPartial
-                && NavMesh.SamplePosition(playerTransform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
-            {
-                agent.Warp(hit.position);
-            }
-            agent.SetDestination(playerTransform.position);
+            transform.rotation = Quaternion.LookRotation(direction);
         }
-
-        if (legacyAnimation != null)
-        {
-            legacyAnimation.CrossFade(agent.velocity.magnitude > 0.1f ? "walk" : "idle");
-        }
+        transform.position = target;
     }
 
     /// <summary>Rebuilds one NavMesh over all static colliders in the scene.</summary>
