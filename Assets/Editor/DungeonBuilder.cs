@@ -1,9 +1,11 @@
 using System.Linq;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public static class DungeonBuilder
 {
@@ -44,7 +46,7 @@ public static class DungeonBuilder
         BuildTunnel(level);
         BuildRoom(level);
         ConvertToUrp(level.gameObject);
-        CopyRig(game);
+        AddChestPrompt(level.GetComponentInChildren<TreasureChest>(), CopyRig(game));
         AddArrivalSound();
         SetLighting();
         EditorSceneManager.SaveScene(dungeon, DungeonPath);
@@ -122,8 +124,8 @@ public static class DungeonBuilder
         }
         for (int j = 0; j < TunnelLength; j += 2)
         {
-            Torch(tunnel, new Vector3(-half, 3, (j + 0.5f) * tile.y), Vector3.right);
-            Torch(tunnel, new Vector3(half, 3, (j + 0.5f) * tile.y), Vector3.left);
+            Torch(tunnel, new Vector3(-half, 3, (j + 0.5f) * tile.y), Vector3.right, 16, 5);
+            Torch(tunnel, new Vector3(half, 3, (j + 0.5f) * tile.y), Vector3.left, 16, 5);
         }
 
         Prop(Decrepit + "Props/Barrel", tunnel, -half + 1, 2.2f * tile.y, 0);
@@ -195,7 +197,7 @@ public static class DungeonBuilder
 
     static void AddTreasureChest(Transform parent, float z)
     {
-        const float scale = 4;
+        float scale = ScaleTo(LowPoly + "Furniture/Chest", 1);
         GameObject chest = Prop(LowPoly + "Furniture/Chest", parent, 0, z, 180, scale);
         chest.name = "Treasure Chest";
         foreach (Transform t in chest.GetComponentsInChildren<Transform>())
@@ -214,10 +216,7 @@ public static class DungeonBuilder
 
         Transform prize = new GameObject("Prize").transform;
         prize.SetParent(chest.transform, false);
-        GameObject sample = Spawn(Coin, null, Vector3.zero, 0, Center);
-        Vector3 size = BoundsOf(sample).size;
-        float coinScale = body.size.x / 8 / Mathf.Max(size.x, size.y, size.z);
-        Object.DestroyImmediate(sample);
+        float coinScale = ScaleTo(Coin, body.size.x / 8);
         Random.InitState(1);
         for (int i = 0; i < 24; i++)
         {
@@ -232,6 +231,33 @@ public static class DungeonBuilder
         treasure.lid = chest.transform.Find("Chest_Lid");
         treasure.prize = prize.gameObject;
         treasure.openSound = AssetDatabase.LoadAssetAtPath<AudioClip>(Sounds + "Coin Bag Reward.wav");
+    }
+
+    static void AddChestPrompt(TreasureChest chest, playerController player)
+    {
+        GameObject prompt = Object.Instantiate(player.winTextObject, player.winTextObject.transform.parent);
+        prompt.name = "Chest Prompt";
+        Rect stone = prompt.GetComponent<Image>().sprite.rect;
+        RectTransform rect = (RectTransform)prompt.transform;
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 1);
+        rect.anchoredPosition = new Vector2(0, -10);
+        rect.sizeDelta = new Vector2(320, 320 * stone.height / stone.width);
+        TextMeshProUGUI text = prompt.GetComponentInChildren<TextMeshProUGUI>();
+        text.rectTransform.anchorMin = new Vector2(0.12f, 0.2f);
+        text.rectTransform.anchorMax = new Vector2(0.88f, 0.8f);
+        text.rectTransform.offsetMin = text.rectTransform.offsetMax = Vector2.zero;
+        text.fontSizeMax = text.fontSize;
+        text.enableAutoSizing = true;
+        prompt.SetActive(false);
+        chest.prompt = prompt;
+    }
+
+    static float ScaleTo(string prefab, float size)
+    {
+        GameObject sample = Spawn(prefab, null, Vector3.zero, 0, Center);
+        Vector3 b = BoundsOf(sample).size;
+        Object.DestroyImmediate(sample);
+        return size / Mathf.Max(b.x, b.y, b.z);
     }
 
     static Transform Hall(string name, Transform parent, int cols, int rows, float z0)
@@ -280,13 +306,13 @@ public static class DungeonBuilder
         Spawn(Decrepit + "Pillars/Pillar_A", parent, new Vector3(x, wallHeight, z), 0, Bottom);
     }
 
-    static void Torch(Transform parent, Vector3 wall, Vector3 inward)
+    static void Torch(Transform parent, Vector3 wall, Vector3 inward, float range = 10, float intensity = 2.5f)
     {
         GameObject torch = Spawn(LowPoly + "Lamps/Torch_Wall", parent, wall + inward * 0.15f, Quaternion.LookRotation(inward).eulerAngles.y, Center);
         foreach (Light light in torch.GetComponentsInChildren<Light>())
         {
-            light.range = 10;
-            light.intensity = 2.5f;
+            light.range = range;
+            light.intensity = intensity;
             light.shadows = LightShadows.None;
         }
     }
@@ -325,7 +351,7 @@ public static class DungeonBuilder
         }
     }
 
-    static void CopyRig(Scene game)
+    static playerController CopyRig(Scene game)
     {
         GameObject rig = new GameObject("Rig");
         SceneManager.MoveGameObjectToScene(rig, game);
@@ -348,6 +374,7 @@ public static class DungeonBuilder
 
         copy.transform.DetachChildren();
         Object.DestroyImmediate(copy);
+        return player.GetComponent<playerController>();
     }
 
     static void SetLighting()

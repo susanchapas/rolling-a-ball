@@ -121,12 +121,14 @@ public class playerController : MonoBehaviour
         else if(other.TryGetComponent(out TreasureChest found))
         {
             chest = found;
+            chest.ShowPrompt(true);
         }
     }
     private void OnTriggerExit(Collider other)
     {
-        if (other.GetComponent<TreasureChest>() != null)
+        if (chest != null && other.gameObject == chest.gameObject)
         {
+            chest.ShowPrompt(false);
             chest = null;
         }
     }
