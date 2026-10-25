@@ -12,7 +12,7 @@ namespace Runemark.DarkFantasyKit
     [InitializeOnLoad]
     public class ReadmeEditor : Editor
     {
-        static string kShowedReadmeSessionStateName = "ReadmeEditor.showedReadme";
+        static string kShowedReadmeSessionStateName = "Runemark.DarkFantasyKit.ReadmeEditor.showedReadme";
 
         static float kSpace = 16f;
 
@@ -48,19 +48,23 @@ namespace Runemark.DarkFantasyKit
         static Readme SelectReadme()
         {
             var ids = AssetDatabase.FindAssets("Readme t:Readme");
-            if (ids.Length == 1)
+            var readmes = new List<Readme>();
+            foreach (var id in ids)
             {
-                var readmeObject = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(ids[0]));
-
-                Selection.objects = new UnityEngine.Object[] { readmeObject };
-
-                return (Readme)readmeObject;
+                // Different namespaces can contain Readme classes; only accept this editor's type.
+                var readme = AssetDatabase.LoadAssetAtPath<Readme>(AssetDatabase.GUIDToAssetPath(id));
+                if (readme != null)
+                    readmes.Add(readme);
             }
-            else
+
+            if (readmes.Count != 1)
             {
-                Debug.Log("Couldn't find a readme");
+                Debug.Log("Couldn't find a unique readme of type " + typeof(Readme).FullName);
                 return null;
             }
+
+            Selection.objects = new UnityEngine.Object[] { readmes[0] };
+            return readmes[0];
         }
 
         protected override void OnHeaderGUI()

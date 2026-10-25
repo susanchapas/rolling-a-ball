@@ -17,6 +17,7 @@ public class playerController : MonoBehaviour
     private readonly HashSet<Transform> platforms = new HashSet<Transform>();
     private float dashEndTime;
     private float nextDashTime;
+    private TreasureChest chest;
     public float speed = 5;
     public float jumpForce = 5;
     public float dashMultiplier = 1.5f;
@@ -26,6 +27,10 @@ public class playerController : MonoBehaviour
     public float groundCheckDistance = 0.6f;
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
+    public GameObject exit;
+    public AudioClip pickupSound;
+    public AudioClip lifeLostSound;
+    public AudioClip gameOverSound;
     public GameObject[] hearts;
     public Slider dashSlider;
     void Start()
@@ -105,6 +110,7 @@ public class playerController : MonoBehaviour
         if(other.gameObject.CompareTag("PickUp"))
         {
             other.gameObject.SetActive(false);
+            PlaySound(pickupSound);
             count++;
             SetCountText();
         }
@@ -112,6 +118,28 @@ public class playerController : MonoBehaviour
         {
             Lose();
         }
+        else if(other.TryGetComponent(out TreasureChest found))
+        {
+            chest = found;
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.GetComponent<TreasureChest>() != null)
+        {
+            chest = null;
+        }
+    }
+    void OnInteract()
+    {
+        if (chest != null)
+        {
+            chest.Toggle(this);
+        }
+    }
+    public void Win()
+    {
+        winTextObject.SetActive(true);
     }
     void SetCountText()
     {
@@ -128,7 +156,10 @@ public class playerController : MonoBehaviour
 
         if(count >= 15)
         {
-            winTextObject.SetActive(true);
+            if (exit != null)
+            {
+                exit.SetActive(true);
+            }
             foreach (GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
             {
                 Destroy(enemy);
@@ -153,13 +184,22 @@ public class playerController : MonoBehaviour
         hearts[lives].SetActive(false);
         if (lives > 0)
         {
+            PlaySound(lifeLostSound);
             Respawn();
             return;
         }
 
+        PlaySound(gameOverSound);
         Destroy(gameObject);
         winTextObject.SetActive(true);
         winTextObject.GetComponentInChildren<TextMeshProUGUI>().text = "You Lose!";
+    }
+    void PlaySound(AudioClip clip)
+    {
+        if (clip != null)
+        {
+            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+        }
     }
     void Respawn()
     {

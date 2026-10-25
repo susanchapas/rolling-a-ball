@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEditor;
 using System.IO;
 using UnityEngine.UIElements;
@@ -31,15 +32,23 @@ sealed class ReadmeEditor : Editor
     static Readme SelectReadme()
     {
         var ids = AssetDatabase.FindAssets("Readme t:Readme");
-        if (ids.Length != 1)
+        var readmes = new List<Readme>();
+        foreach (var id in ids)
         {
-            Debug.Log("Couldn't find a readme");
+            // Different namespaces can contain Readme classes; only accept this editor's type.
+            var readme = AssetDatabase.LoadAssetAtPath<Readme>(AssetDatabase.GUIDToAssetPath(id));
+            if (readme != null)
+                readmes.Add(readme);
+        }
+
+        if (readmes.Count != 1)
+        {
+            Debug.Log("Couldn't find a unique readme of type " + typeof(Readme).FullName);
             return null;
         }
 
-        var readmeObject = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(ids[0]));
-        Selection.objects = new UnityEngine.Object[] { readmeObject };
-        return (Readme)readmeObject;
+        Selection.objects = new UnityEngine.Object[] { readmes[0] };
+        return readmes[0];
     }
     
     void RemoveTutorial()
