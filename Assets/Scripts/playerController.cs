@@ -17,7 +17,9 @@ public class playerController : MonoBehaviour
     private readonly HashSet<Transform> platforms = new HashSet<Transform>();
     private float dashEndTime;
     private float nextDashTime;
-    private TreasureChest chest;
+    private IInteractable interactable;
+    private static int carriedPotions;
+    private const int potionGoal = 15;
     public float speed = 5;
     public float jumpForce = 5;
     public float dashMultiplier = 1.5f;
@@ -37,7 +39,8 @@ public class playerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.sleepThreshold = 0.0f;
-        count = 0;
+        count = carriedPotions;
+        carriedPotions = 0;
         lives = hearts.Length;
         checkpoint = rb.position;
         foreach (EnemyMovement enemy in FindObjectsByType<EnemyMovement>())
@@ -118,26 +121,35 @@ public class playerController : MonoBehaviour
         {
             Lose();
         }
-        else if(other.TryGetComponent(out TreasureChest found))
+        else if(other.TryGetComponent(out IInteractable found))
         {
-            chest = found;
-            chest.ShowPrompt(true);
+            interactable = found;
+            interactable.ShowPrompt(true);
         }
     }
     private void OnTriggerExit(Collider other)
     {
-        if (chest != null && other.gameObject == chest.gameObject)
+        if (interactable != null && other.TryGetComponent(out IInteractable found) && found == interactable)
         {
-            chest.ShowPrompt(false);
-            chest = null;
+            interactable.ShowPrompt(false);
+            interactable = null;
         }
     }
     void OnInteract()
     {
-        if (chest != null)
+        if (interactable != null)
         {
-            chest.Toggle(this);
+            interactable.Interact(this);
         }
+    }
+    public void CarryPotions()
+    {
+        carriedPotions = count;
+    }
+    public void GivePotions()
+    {
+        count = 0;
+        SetCountText();
     }
     public void Win()
     {
@@ -145,7 +157,7 @@ public class playerController : MonoBehaviour
     }
     void SetCountText()
     {
-        countText.text = "Count: " + count.ToString();
+        countText.text = $"Potions: {count}/{potionGoal}";
         if (count >= 3 && northDoor != null && northDoor.activeSelf)
         {
             northDoor.SetActive(false);
@@ -156,7 +168,7 @@ public class playerController : MonoBehaviour
             }
         }
 
-        if(count >= 15)
+        if(count >= potionGoal)
         {
             if (exit != null)
             {

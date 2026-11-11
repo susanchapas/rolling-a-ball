@@ -1,6 +1,6 @@
 using TMPro;
 using UnityEngine;
-public class TreasureChest : MonoBehaviour
+public class TreasureChest : MonoBehaviour, IInteractable
 {
     public Transform lid;
     public GameObject prize;
@@ -24,7 +24,7 @@ public class TreasureChest : MonoBehaviour
         prompt.SetActive(visible && !won);
         promptText.text = open ? "Press E to close" : "Press E to open";
     }
-    public void Toggle(playerController player)
+    public void Interact(playerController player)
     {
         if (won)
         {
